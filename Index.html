@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excel Formula Sensei</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* Styling tambahan agar hasil Markdown dan blok kode terlihat rapi */
+    #resultContent pre {
+      position: relative;
+      background-color: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      padding: 2.5rem 1rem 1rem 1rem;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+    }
+    #resultContent pre code {
+      color: #34d399;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+    }
+    #resultContent p code {
+      background-color: #1e293b;
+      color: #6ee7b7;
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.25rem;
+      font-size: 0.85em;
+    }
+    #resultContent ul, #resultContent ol {
+      padding-left: 1.25rem;
+      margin: 0.5rem 0;
+    }
+    #resultContent ul { list-style-type: disc; }
+    #resultContent ol { list-style-type: decimal; }
+    #resultContent li { margin-bottom: 0.35rem; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen py-10 px-4">
+  <div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-emerald-400">🥋 Excel Formula Sensei</h1>
+      <p class="text-slate-400 mt-2">Ubah bahasa sehari-hari menjadi rumus Excel & Google Sheets siap pakai.</p>
+    </div>
+
+    <!-- Pengaturan API Key -->
+    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <label class="text-xs font-medium text-slate-400">Gemini API Key (Disimpan lokal di browser kamu):</label>
+        <a href="https://aistudio.google.com/apikey" target="_blank" class="text-xs text-emerald-400 hover:underline">Dapatkan API Key Gratis →</a>
+      </div>
+      <div class="flex gap-2 mt-2">
+        <input id="apiKey" type="password" placeholder="AIzaSy..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none" />
+        <button onclick="saveApiKey()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2 rounded-lg border border-slate-700 cursor-pointer">
+          Simpan
+        </button>
+      </div>
+      <p id="keyStatus" class="text-xs text-emerald-400 mt-1.5 hidden">✓ API Key tersimpan di browser.</p>
+    </div>
+
+    <!-- Form Input -->
+    <div class="bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Platform</label>
+          <select id="platform" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none">
+            <option value="Microsoft Excel">Microsoft Excel</option>
+            <option value="Google Sheets">Google Sheets</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Pemisah Argumen</label>
+          <select id="separator" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none">
+            <option value="; (Semicolon - Regional Indonesia)">Titik Koma ( ; ) — Regional Indonesia</option>
+            <option value=", (Comma - Regional US/UK)">Koma ( , ) — Regional US/UK</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Tujuan Perhitungan *</label>
+        <textarea id="task" rows="2" placeholder="Contoh: Hitung total penjualan produk kategori Elektronik" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Referensi Sel & Struktur Data</label>
+        <input id="references" type="text" placeholder="Contoh: Kategori di A2:A100, Nominal di B2:B100" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Syarat / Kondisi Khusus (Opsional)</label>
+        <input id="constraints" type="text" placeholder="Contoh: Hanya status 'Lunas' di kolom C, tampilkan 0 jika error" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none" />
+      </div>
+
+      <button id="submitBtn" onclick="generateFormula()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 px-4 rounded-lg transition cursor-pointer">
+        Buatkan Rumus
+      </button>
+    </div>
+
+    <!-- Hasil Output -->
+    <div id="resultBox" class="hidden mt-6 bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-emerald-400">Hasil Analisis Sensei:</h2>
+      </div>
+      <div id="resultContent" class="text-sm text-slate-200 leading-relaxed space-y-3"></div>
+    </div>
+  </div>
+
+  <script>
+    const SYSTEM_PROMPT = `You are Excel Formula Sensei, an expert Microsoft Excel and Google Sheets architect. Your task is to translate natural language requests into accurate, efficient, and ready-to-use spreadsheet formulas.
+
+Instructions:
+1. Provide the exact formula inside a single Markdown code block at the very top so the user can copy it easily. Do not put comments inside the formula code block.
+2. Respect the requested argument separator (Comma ',' or Semicolon ';').
+3. Provide a clear, concise step-by-step explanation of how each function, operator, and cell reference works.
+4. Mention potential edge cases or errors (like #N/A or #VALUE!) and how to handle them.
+5. Respond in the same language as the user's task description (Indonesian or English).`;
+
+    // Muat API Key jika sudah tersimpan sebelumnya
+    window.onload = () => {
+      const savedKey = localStorage.getItem("gemini_api_key");
+      if (savedKey) {
+        document.getElementById("apiKey").value = savedKey;
+        document.getElementById("keyStatus").classList.remove("hidden");
+      }
+    };
+
+    function saveApiKey() {
+      const key = document.getElementById("apiKey").value.trim();
+      if (!key) {
+        alert("Masukkan API Key terlebih dahulu.");
+        return;
+      }
+      localStorage.setItem("gemini_api_key", key);
+      document.getElementById("keyStatus").classList.remove("hidden");
+    }
+
+    // Fungsi menyisipkan tombol Copy otomatis ke setiap blok <pre>
+    function attachCopyButtons(container) {
+      const preBlocks = container.querySelectorAll("pre");
+      preBlocks.forEach((pre) => {
+        const codeEl = pre.querySelector("code");
+        if (!codeEl) return;
+
+        // Label kecil di pojok kiri atas blok kode
+        const label = document.createElement("span");
+        label.textContent = "FORMULA";
+        label.className = "absolute top-2 left-3 text-[10px] font-semibold tracking-wider text-slate-500 select-none";
+        pre.appendChild(label);
+
+        // Tombol Salin di pojok kanan atas blok kode
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.textContent = "Salin";
+        copyBtn.className =
+          "absolute top-1.5 right-2 bg-slate-800 hover:bg-emerald-600 hover:text-slate-950 text-slate-300 text-xs font-medium px-2.5 py-1 rounded border border-slate-700 transition cursor-pointer";
+
+        copyBtn.addEventListener("click", async () => {
+          const textToCopy = codeEl.innerText.trim();
+          try {
+            await navigator.clipboard.writeText(textToCopy);
+            copyBtn.textContent = "✓ Tersalin!";
+            copyBtn.classList.add("bg-emerald-500", "text-slate-950", "border-emerald-400");
+            setTimeout(() => {
+              copyBtn.textContent = "Salin";
+              copyBtn.classList.remove("bg-emerald-500", "text-slate-950", "border-emerald-400");
+            }, 2000);
+          } catch (err) {
+            alert("Gagal menyalin teks. Silakan salin secara manual.");
+          }
+        });
+
+        pre.appendChild(copyBtn);
+      });
+    }
+
+    async function generateFormula() {
+      const apiKey = document.getElementById("apiKey").value.trim();
+      const task = document.getElementById("task").value.trim();
+      const references = document.getElementById("references").value.trim();
+      const constraints = document.getElementById("constraints").value.trim();
+      const platform = document.getElementById("platform").value;
+      const separator = document.getElementById("separator").value;
+
+      const btn = document.getElementById("submitBtn");
+      const resultBox = document.getElementById("resultBox");
+      const resultContent = document.getElementById("resultContent");
+
+      if (!apiKey) {
+        alert("Silakan masukkan Gemini API Key terlebih dahulu.");
+        return;
+      }
+      if (!task) {
+        alert("Silakan isi tujuan perhitungan terlebih dahulu.");
+        return;
+      }
+
+      localStorage.setItem("gemini_api_key", apiKey);
+
+      const userPrompt = `
+- **Spreadsheet Platform:** ${platform}
+- **Argument Separator:** ${separator}
+- **Goal / Desired Calculation:** ${task}
+- **Input Data & Cell References:** ${references || "Not specified (use standard example cells)"}
+- **Specific Conditions / Constraints:** ${constraints || "None"}
+`;
+
+      btn.disabled = true;
+      btn.textContent = "Sedang meracik rumus...";
+      resultBox.classList.add("hidden");
+
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+              contents: [{ parts: [{ text: userPrompt }] }],
+              generationConfig: { temperature: 0.2 }
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || "Terjadi kesalahan pada API.");
+        }
+
+        const replyText = data.candidates[0].content.parts[0].text;
+        resultContent.innerHTML = marked.parse(replyText);
+        attachCopyButtons(resultContent);
+        resultBox.classList.remove("hidden");
+      } catch (err) {
+        resultContent.innerHTML = `<p class="text-red-400">Error: ${err.message}</p>`;
+        resultBox.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Buatkan Rumus";
+      }
+    }
+  </script>
+</body>
+</html>
