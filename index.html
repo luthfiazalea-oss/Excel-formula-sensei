@@ -3,61 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Excel Formula Sensei</title>
+  <title>Excel Formula Sensei (Offline Engine)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <style>
-    #resultContent pre {
-      position: relative;
-      background-color: #020617;
-      border: 1px solid #1e293b;
-      border-radius: 0.5rem;
-      padding: 2.5rem 1rem 1rem 1rem;
-      overflow-x: auto;
-      margin: 0.75rem 0;
-    }
-    #resultContent pre code {
-      color: #34d399;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.9rem;
-    }
-    #resultContent p code {
-      background-color: #1e293b;
-      color: #6ee7b7;
-      padding: 0.15rem 0.35rem;
-      border-radius: 0.25rem;
-      font-size: 0.85em;
-    }
-    #resultContent ul, #resultContent ol {
-      padding-left: 1.25rem;
-      margin: 0.5rem 0;
-    }
-    #resultContent ul { list-style-type: disc; }
-    #resultContent ol { list-style-type: decimal; }
-    #resultContent li { margin-bottom: 0.35rem; }
-  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen py-10 px-4">
   <div class="max-w-3xl mx-auto">
     <!-- Header -->
     <div class="mb-8 text-center">
       <h1 class="text-3xl font-bold text-emerald-400">🥋 Excel Formula Sensei</h1>
-      <p class="text-slate-400 mt-2">Ubah bahasa sehari-hari menjadi rumus Excel & Google Sheets siap pakai.</p>
-    </div>
-
-    <!-- Pengaturan API Key -->
-    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <label class="text-xs font-medium text-slate-400">Gemini API Key (Disimpan lokal di browser kamu):</label>
-        <a href="https://aistudio.google.com/apikey" target="_blank" class="text-xs text-emerald-400 hover:underline">Dapatkan API Key Gratis →</a>
-      </div>
-      <div class="flex gap-2 mt-2">
-        <input id="apiKey" type="password" placeholder="AIzaSy..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none" />
-        <button onclick="saveApiKey()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2 rounded-lg border border-slate-700 cursor-pointer">
-          Simpan
-        </button>
-      </div>
-      <p id="keyStatus" class="text-xs text-emerald-400 mt-1.5 hidden">✓ API Key tersimpan di browser.</p>
+      <p class="text-slate-400 mt-2">Generator rumus Excel & Google Sheets mandiri — instan tanpa API Key.</p>
     </div>
 
     <!-- Form Input -->
@@ -66,177 +20,216 @@
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-1">Platform</label>
           <select id="platform" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none">
-            <option value="Microsoft Excel">Microsoft Excel</option>
-            <option value="Google Sheets">Google Sheets</option>
+            <option value="excel">Microsoft Excel</option>
+            <option value="sheets">Google Sheets</option>
           </select>
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-1">Pemisah Argumen</label>
           <select id="separator" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none">
-            <option value="; (Semicolon - Regional Indonesia)">Titik Koma ( ; ) — Regional Indonesia</option>
-            <option value=", (Comma - Regional US/UK)">Koma ( , ) — Regional US/UK</option>
+            <option value=";">Titik Koma ( ; ) — Regional Indonesia</option>
+            <option value=",">Koma ( , ) — Regional US/UK</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1">Tujuan Perhitungan *</label>
-        <textarea id="task" rows="2" placeholder="Contoh: Hitung total penjualan produk kategori Elektronik" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none"></textarea>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Jenis Perhitungan *</label>
+        <select id="calcType" onchange="updatePlaceholders()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none">
+          <option value="auto">Deteksi Otomatis dari Kalimat Tujuan</option>
+          <option value="sumifs">Jumlahkan Data dengan Syarat (SUMIFS)</option>
+          <option value="countifs">Hitung Jumlah Baris dengan Syarat (COUNTIFS)</option>
+          <option value="xlookup">Cari & Ambil Data dari Tabel Lain (XLOOKUP / VLOOKUP)</option>
+          <option value="if_status">Logika Kondisi / Status Bertingkat (IF / IFS)</option>
+          <option value="date_due">Cek Jatuh Tempo & Sisa Hari (TODAY / IF)</option>
+          <option value="clean_text">Rapikan & Ambil Potongan Teks (TRIM / LEFT / MID)</option>
+          <option value="trading_pnl">Kalkulator Profit/Loss & Fee Trading</option>
+        </select>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1">Referensi Sel & Struktur Data</label>
-        <input id="references" type="text" placeholder="Contoh: Kategori di A2:A100, Nominal di B2:B100" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none" />
+        <label class="block text-sm font-medium text-slate-300 mb-1">Tujuan / Deskripsi Perhitungan *</label>
+        <textarea id="task" rows="2" placeholder="Contoh: Jumlahkan total penjualan di B2:B100 jika kolom A2:A100 berstatus Lunas" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Kolom Target / Nilai Utama</label>
+          <input id="targetRange" type="text" placeholder="Contoh: B2:B100 (atau sel A2)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Kolom Syarat / Tabel Referensi</label>
+          <input id="criteriaRange" type="text" placeholder="Contoh: A2:A100 (atau Master!A2:D500)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none" />
+        </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1">Syarat / Kondisi Khusus (Opsional)</label>
-        <input id="constraints" type="text" placeholder="Contoh: Hanya status 'Lunas' di kolom C, tampilkan 0 jika error" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none" />
+        <label class="block text-sm font-medium text-slate-300 mb-1">Kriteria / Nilai Jika Error (Opsional)</label>
+        <input id="conditionVal" type="text" placeholder="Contoh: Lunas (atau tampilkan 0 jika tidak ditemukan)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-emerald-400 focus:outline-none" />
       </div>
 
-      <button id="submitBtn" onclick="generateFormula()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 px-4 rounded-lg transition cursor-pointer">
-        Buatkan Rumus
+      <button onclick="buildFormula()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 px-4 rounded-lg transition cursor-pointer">
+        Buatkan Rumus Sekarang
       </button>
     </div>
 
     <!-- Hasil Output -->
-    <div id="resultBox" class="hidden mt-6 bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold text-emerald-400">Hasil Analisis Sensei:</h2>
+    <div id="resultBox" class="hidden mt-6 bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-emerald-400">Hasil Rumus Siap Pakai:</h2>
+        <span class="text-xs text-emerald-400/80 bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-800/50">⚡ Local Engine</span>
       </div>
-      <div id="resultContent" class="text-sm text-slate-200 leading-relaxed space-y-3"></div>
+
+      <!-- Kotak Rumus + Tombol Copy -->
+      <div class="relative bg-slate-950 border border-slate-800 rounded-lg p-4 pt-9 overflow-x-auto">
+        <span class="absolute top-2 left-3 text-[10px] font-semibold tracking-wider text-slate-500">FORMULA</span>
+        <button id="copyBtn" onclick="copyFormula()" class="absolute top-1.5 right-2 bg-slate-800 hover:bg-emerald-600 hover:text-slate-950 text-slate-300 text-xs font-medium px-3 py-1 rounded border border-slate-700 transition cursor-pointer">
+          Salin
+        </button>
+        <code id="formulaOutput" class="text-emerald-400 font-mono text-sm whitespace-pre-wrap break-all"></code>
+      </div>
+
+      <!-- Penjelasan -->
+      <div class="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4 text-sm text-slate-300 space-y-2">
+        <h3 class="font-semibold text-slate-100">Cara Kerja Rumus:</h3>
+        <div id="explanationOutput" class="space-y-1.5 leading-relaxed"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    const SYSTEM_PROMPT = `You are Excel Formula Sensei, an expert Microsoft Excel and Google Sheets architect. Your task is to translate natural language requests into accurate, efficient, and ready-to-use spreadsheet formulas.
-
-Instructions:
-1. Provide the exact formula inside a single Markdown code block at the very top so the user can copy it easily. Do not put comments inside the formula code block.
-2. Respect the requested argument separator (Comma ',' or Semicolon ';').
-3. Provide a clear, concise step-by-step explanation of how each function, operator, and cell reference works.
-4. Mention potential edge cases or errors (like #N/A or #VALUE!) and how to handle them.
-5. Respond in the same language as the user's task description (Indonesian or English).`;
-
-    window.onload = () => {
-      const savedKey = localStorage.getItem("gemini_api_key");
-      if (savedKey) {
-        document.getElementById("apiKey").value = savedKey;
-        document.getElementById("keyStatus").classList.remove("hidden");
-      }
-    };
-
-    function saveApiKey() {
-      const key = document.getElementById("apiKey").value.trim();
-      if (!key) {
-        alert("Masukkan API Key terlebih dahulu.");
-        return;
-      }
-      localStorage.setItem("gemini_api_key", key);
-      document.getElementById("keyStatus").classList.remove("hidden");
+    function detectTypeFromText(text) {
+      const t = text.toLowerCase();
+      if (t.includes("jumlahkan") || t.includes("total") || t.includes("sum")) return "sumifs";
+      if (t.includes("hitung jumlah") || t.includes("berapa banyak") || t.includes("count")) return "countifs";
+      if (t.includes("cari") || t.includes("ambil") || t.includes("lookup") || t.includes("harga")) return "xlookup";
+      if (t.includes("jatuh tempo") || t.includes("hari") || t.includes("tanggal") || t.includes("telat")) return "date_due";
+      if (t.includes("spasi") || t.includes("potong") || t.includes("teks") || t.includes("huruf") || t.includes("invoice")) return "clean_text";
+      if (t.includes("trading") || t.includes("profit") || t.includes("long") || t.includes("short") || t.includes("leverage")) return "trading_pnl";
+      return "if_status";
     }
 
-    function attachCopyButtons(container) {
-      const preBlocks = container.querySelectorAll("pre");
-      preBlocks.forEach((pre) => {
-        const codeEl = pre.querySelector("code");
-        if (!codeEl) return;
+    function updatePlaceholders() {
+      const type = document.getElementById("calcType").value;
+      const target = document.getElementById("targetRange");
+      const criteria = document.getElementById("criteriaRange");
+      const cond = document.getElementById("conditionVal");
 
-        const label = document.createElement("span");
-        label.textContent = "FORMULA";
-        label.className = "absolute top-2 left-3 text-[10px] font-semibold tracking-wider text-slate-500 select-none";
-        pre.appendChild(label);
+      const presets = {
+        sumifs: ["B2:B100", "A2:A100", "Lunas"],
+        countifs: ["A2:A100", "B2:B100", "Aktif"],
+        xlookup: ["A2", "Master!A2:A500", "Master!D2:D500"],
+        if_status: ["D2", "50000000", "Target Tercapai"],
+        date_due: ["C2", "7", "Terlambat"],
+        clean_text: ["A2", " - ", ""],
+        trading_pnl: ["A2 (LONG/SHORT)", "B2 (Entry), C2 (Exit)", "D2 (Modal), E2 (Leverage)"]
+      };
 
-        const copyBtn = document.createElement("button");
-        copyBtn.type = "button";
-        copyBtn.textContent = "Salin";
-        copyBtn.className =
-          "absolute top-1.5 right-2 bg-slate-800 hover:bg-emerald-600 hover:text-slate-950 text-slate-300 text-xs font-medium px-2.5 py-1 rounded border border-slate-700 transition cursor-pointer";
-
-        copyBtn.addEventListener("click", async () => {
-          const textToCopy = codeEl.innerText.trim();
-          try {
-            await navigator.clipboard.writeText(textToCopy);
-            copyBtn.textContent = "✓ Tersalin!";
-            copyBtn.classList.add("bg-emerald-500", "text-slate-950", "border-emerald-400");
-            setTimeout(() => {
-              copyBtn.textContent = "Salin";
-              copyBtn.classList.remove("bg-emerald-500", "text-slate-950", "border-emerald-400");
-            }, 2000);
-          } catch (err) {
-            alert("Gagal menyalin teks. Silakan salin secara manual.");
-          }
-        });
-
-        pre.appendChild(copyBtn);
-      });
+      if (presets[type]) {
+        target.placeholder = "Contoh: " + presets[type][0];
+        criteria.placeholder = "Contoh: " + presets[type][1];
+        cond.placeholder = "Contoh: " + presets[type][2];
+      }
     }
 
-    async function generateFormula() {
-      const apiKey = document.getElementById("apiKey").value.trim();
-      const task = document.getElementById("task").value.trim();
-      const references = document.getElementById("references").value.trim();
-      const constraints = document.getElementById("constraints").value.trim();
+    function buildFormula() {
+      const sep = document.getElementById("separator").value;
       const platform = document.getElementById("platform").value;
-      const separator = document.getElementById("separator").value;
+      const selectedType = document.getElementById("calcType").value;
+      const task = document.getElementById("task").value.trim();
+      const target = document.getElementById("targetRange").value.trim();
+      const criteria = document.getElementById("criteriaRange").value.trim();
+      const cond = document.getElementById("conditionVal").value.trim();
 
-      const btn = document.getElementById("submitBtn");
-      const resultBox = document.getElementById("resultBox");
-      const resultContent = document.getElementById("resultContent");
-
-      if (!apiKey) {
-        alert("Silakan masukkan Gemini API Key terlebih dahulu.");
-        return;
-      }
-      if (!task) {
-        alert("Silakan isi tujuan perhitungan terlebih dahulu.");
+      if (!task && selectedType === "auto") {
+        alert("Isi deskripsi tujuan perhitungan atau pilih jenis perhitungan.");
         return;
       }
 
-      localStorage.setItem("gemini_api_key", apiKey);
+      const type = selectedType === "auto" ? detectTypeFromText(task) : selectedType;
+      let formula = "";
+      let steps = [];
 
-      const userPrompt = `
-- **Spreadsheet Platform:** ${platform}
-- **Argument Separator:** ${separator}
-- **Goal / Desired Calculation:** ${task}
-- **Input Data & Cell References:** ${references || "Not specified (use standard example cells)"}
-- **Specific Conditions / Constraints:** ${constraints || "None"}
-`;
+      if (type === "sumifs") {
+        const sumCol = target || "B2:B100";
+        const critCol = criteria || "A2:A100";
+        const critVal = cond ? `"${cond}"` : `"Lunas"`;
+        formula = `=IFERROR(SUMIFS(${sumCol}${sep} ${critCol}${sep} ${critVal})${sep} 0)`;
+        steps = [
+          `• <b>SUMIFS(${sumCol}${sep} ${critCol}${sep} ${critVal})</b>: Menjumlahkan seluruh angka di rentang <code>${sumCol}</code> hanya pada baris yang kolom <code>${critCol}</code>-nya bernilai <code>${critVal}</code>.`,
+          `• <b>IFERROR(...${sep} 0)</b>: Menampilkan angka <code>0</code> secara otomatis jika terjadi galat perhitungan.`
+        ];
+      } else if (type === "countifs") {
+        const critCol = target || "A2:A100";
+        const critVal = cond ? `"${cond}"` : `"Aktif"`;
+        formula = `=COUNTIFS(${critCol}${sep} ${critVal})`;
+        steps = [
+          `• <b>COUNTIFS(${critCol}${sep} ${critVal})</b>: Menghitung berapa banyak baris di rentang <code>${critCol}</code> yang memenuhi kriteria <code>${critVal}</code>.`
+        ];
+      } else if (type === "xlookup") {
+        const lookupCell = target || "A2";
+        const lookupArr = criteria || "Master!A2:A500";
+        const returnArr = cond || "Master!D2:D500";
+        formula = `=XLOOKUP(${lookupCell}${sep} ${lookupArr}${sep} ${returnArr}${sep} "Tidak Ditemukan")`;
+        steps = [
+          `• <b>XLOOKUP</b>: Mencari nilai dari sel <code>${lookupCell}</code> di dalam kolom referensi <code>${lookupArr}</code>.`,
+          `• Jika cocok, rumus mengambil data sejajar dari <code>${returnArr}</code>.`,
+          `• Argumen terakhir <code>"Tidak Ditemukan"</code> mencegah munculnya error <code>#N/A</code> jika kode belum terdaftar.`
+        ];
+      } else if (type === "date_due") {
+        const dateCell = target || "C2";
+        const warnDays = criteria || "7";
+        formula = `=IF(${dateCell}=""${sep} ""${sep} IF(${dateCell}<TODAY()${sep} "Terlambat"${sep} IF(${dateCell}-TODAY()<=${warnDays}${sep} "Segera Jatuh Tempo"${sep} "Aman")))`;
+        steps = [
+          `• <b>${dateCell}<TODAY()</b>: Mengecek apakah tanggal jatuh tempo sudah melewati hari ini (<code>TODAY()</code>). Jika ya, muncul status <b>"Terlambat"</b>.`,
+          `• <b>${dateCell}-TODAY()<=${warnDays}</b>: Jika sisa hari kurang dari atau sama dengan <code>${warnDays}</code> hari, muncul peringatan <b>"Segera Jatuh Tempo"</b>.`,
+          `• Selain kondisi tersebut, status otomatis bertuliskan <b>"Aman"</b>.`
+        ];
+      } else if (type === "clean_text") {
+        const textCell = target || "A2";
+        const delimiter = criteria || " - ";
+        formula = `=UPPER(TRIM(LEFT(${textCell}${sep} IFERROR(FIND("${delimiter}"${sep} ${textCell})-1${sep} LEN(${textCell})))))`;
+        steps = [
+          `• <b>FIND("${delimiter}"${sep} ${textCell})-1</b>: Mencari posisi pemisah <code>"${delimiter}"</code> agar hanya mengambil teks sebelumnya.`,
+          `• <b>TRIM(...)</b>: Menghapus spasi berlebih di awal maupun akhir teks.`,
+          `• <b>UPPER(...)</b>: Mengubah seluruh hasil menjadi huruf kapital.`
+        ];
+      } else if (type === "trading_pnl") {
+        formula = `=IF(A2="LONG"${sep} ((C2-B2)/B2)*E2*D2${sep} ((B2-C2)/B2)*E2*D2) - (D2*E2*0.001)`;
+        steps = [
+          `• Asumsi kolom: <code>A2</code> = Arah ("LONG"/"SHORT"), <code>B2</code> = Entry, <code>C2</code> = Exit, <code>D2</code> = Modal, <code>E2</code> = Leverage.`,
+          `• <b>IF(A2="LONG"...)</b>: Menghitung persentase selisih harga dikalikan leverage dan modal sesuai arah posisi.`,
+          `• <b>-(D2*E2*0.001)</b>: Mengurangi estimasi total biaya transaksi (fee) sebesar 0,1% dari total ukuran posisi.`
+        ];
+      } else {
+        const checkCell = target || "D2";
+        const threshold = criteria || "50000000";
+        const passLabel = cond || "Tercapai";
+        formula = `=IF(${checkCell}>=${threshold}${sep} "${passLabel}"${sep} "Belum Tercapai")`;
+        steps = [
+          `• <b>IF(${checkCell}>=${threshold}...)</b>: Membandingkan nilai pada sel <code>${checkCell}</code> terhadap batas <code>${threshold}</code>.`,
+          `• Jika memenuhi syarat, menghasilkan <b>"${passLabel}"</b>; jika belum, menghasilkan <b>"Belum Tercapai"</b>.`
+        ];
+      }
 
-      btn.disabled = true;
-      btn.textContent = "Sedang meracik rumus...";
-      resultBox.classList.add("hidden");
+      document.getElementById("formulaOutput").textContent = formula;
+      document.getElementById("explanationOutput").innerHTML = steps.map(s => `<p>${s}</p>`).join("");
+      document.getElementById("resultBox").classList.remove("hidden");
+    }
 
+    async function copyFormula() {
+      const text = document.getElementById("formulaOutput").textContent;
+      const btn = document.getElementById("copyBtn");
       try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-              contents: [{ parts: [{ text: userPrompt }] }],
-              generationConfig: { temperature: 0.2 }
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error?.message || "Terjadi kesalahan pada API.");
-        }
-
-        const replyText = data.candidates[0].content.parts[0].text;
-        resultContent.innerHTML = marked.parse(replyText);
-        attachCopyButtons(resultContent);
-        resultBox.classList.remove("hidden");
-      } catch (err) {
-        resultContent.innerHTML = `<p class="text-red-400">Error: ${err.message}</p>`;
-        resultBox.classList.remove("hidden");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Buatkan Rumus";
+        await navigator.clipboard.writeText(text);
+        btn.textContent = "✓ Tersalin!";
+        btn.classList.add("bg-emerald-500", "text-slate-950");
+        setTimeout(() => {
+          btn.textContent = "Salin";
+          btn.classList.remove("bg-emerald-500", "text-slate-950");
+        }, 2000);
+      } catch {
+        alert("Gagal menyalin otomatis. Silakan salin manual.");
       }
     }
   </script>
